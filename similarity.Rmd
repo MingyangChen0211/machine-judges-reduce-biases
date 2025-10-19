@@ -4,15 +4,12 @@ author: "Mingyang Chen"
 date: "`r Sys.Date()`"
 output: html_document
 ---
-# 机器和人类比较
-# 读取数据
 
 ```{r}
 #######################
-#准备需要用到的文件和包
+#prepare data
 #######################
-library(ggplot2)
-caseset <- read.csv("validation_dataset_final.csv")
+caseset <- read.csv("legal_only_model_internal_bias_analysis.csv")
 ```
 
 #human
