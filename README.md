@@ -10,6 +10,6 @@ We illustrate the English translation for our data's factors.
 | ----------- | ------- | ----- | ---------------- | ---- | --------------- | ------------- | ------------ | ------- | --------- | -------- | -------------- | ------------------- | ---------- | -------------------------- | ------------------ | ------------- | ---------- | --------------- | -------- | -------- | -------- | -------------- | ------------- | -------------- | ----------- | ----------------- | ---------------- | --------------------- |
 | Preparation | Attempt | Abort | Relatively large | Huge | Especially huge | Take a weapon | Repeat crime | Roaming | Snatching | Burglary | Self-surrender | Meritorious service | Confession | Make a truthful confession | Admission of guilt | Plea leniency | Recidivism | Criminal record | Juvenile | Old-aged | Disabled | Mental illness | Understanding | Reconciliation | Restitution | Underworld forces | Judge sentencing | Prediction Sentencing |
 
-## Authership Declaration
+## Authorship Declaration
 
 The similarity and Empirical Elec code is written by Mingyang Chen; The rest of code is written by Zhipeng Wu. 
