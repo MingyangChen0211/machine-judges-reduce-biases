@@ -1,0 +1,93 @@
+---
+title: "Empirical Elec."
+author: "Mingyang Chen"
+date: "`r Sys.Date()`"
+output: html_document
+---
+# 机器和人类比较
+# 读取数据
+
+```{r}
+#######################
+#准备需要用到的文件和包
+#######################
+library(ggplot2)
+caseset <- read.csv("validation_dataset_final.csv")
+```
+
+#human
+
+```{r}
+reasonset <- caseset[,c(3:30)]
+reasonset <- as.matrix(reasonset)
+
+cosine <- function(a,b){
+  numer <- apply(a * t(b), 2, sum)
+  denom <- sqrt(sum(a^2)) * sqrt(apply(b^2, 1, sum))
+  return(numer / denom)
+}
+
+
+# 总回归
+results <- data.frame()
+
+for (i in caseset$编号) {
+  numberReason <- cosine(reasonset[i,], reasonset)
+  numberVerdict <- rep(NA, length(caseset$法官原始刑期))
+
+  for (k in 1:length(numberReason)){
+    numberVerdict[k] <- sqrt((caseset$法官原始刑期[k] - caseset$法官原始刑期[i])^2)
+  }
+  numberVerdict <- log1p(numberVerdict)
+  model <- lm(numberVerdict[-i] ~ numberReason[-i])
+    results <- rbind(results, data.frame(
+    iteration = i,
+    slope = coef(model)[2]
+  ))
+}
+```
+
+#machine
+
+```{r}
+reasonset <- caseset[,c(3:30)]
+reasonset <- as.matrix(reasonset)
+
+cosine <- function(a,b){
+  numer <- apply(a * t(b), 2, sum)
+  denom <- sqrt(sum(a^2)) * sqrt(apply(b^2, 1, sum))
+  return(numer / denom)
+}
+
+results1 <- data.frame()
+
+for (i in caseset$编号) {
+  numberReason <- cosine(reasonset[i,], reasonset)
+  numberVerdict <- rep(NA, length(caseset$预测刑期1))
+
+  for (k in 1:length(numberReason)){
+    numberVerdict[k] <- sqrt((caseset$法官原始刑期[k] - caseset$预测刑期1[i])^2)
+  }
+  numberVerdict <- log1p(numberVerdict)
+  model <- lm(numberVerdict[-i] ~ numberReason[-i])
+    results1 <- rbind(results1, data.frame(
+    iteration = i,
+    slope = coef(model)[2]
+  ))
+}
+
+# draw graph
+df <- data.frame(
+  value = c(results$slope, results1$slope),
+  group = factor(rep(c("Judges", "Machine"), times = c(344,357)))
+)
+
+ggplot(df, aes(x = value, fill = group)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Comparison of Two Histograms", x = "Value", y = "Frequency") +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme_bw()
+
+caseset$slope_judge <- results$slope
+caseset$slope_machine <- results1$slope
+```

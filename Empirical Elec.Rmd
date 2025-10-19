@@ -1,0 +1,147 @@
+---
+title: "Empirical part"
+author: "Mingyang Chen"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Gini
+
+```{r}
+caseset <- read.csv("legal_only_model_internal_bias_analysis.csv")
+library(AER)
+library(MASS)
+library(robust)
+library(qcc)
+library(ggplot2)
+library(dplyr)
+
+# decide model type
+qcc.overdispersion.test(caseset$法官原始刑期,type = "poisson")
+# build model
+ses_l1 <- glm.nb(法官原始刑期 ~ 较大 + 巨大 + 特别巨大 + 凶器 + 多次 + 流窜 +
+               扒窃 + 入户 +
+               立功 + 系自首 + 系坦白 + 如实供述 + 自愿认罪 +
+               累犯 + 前科 + 未成年 + 老年人 + 残疾 + 精神病 +
+               谅解 + 和解 + 赔偿 + 黑恶势力 + 
+               灾害 + 认罪认罚 + 中止 + 未遂 + 预备, data <- caseset, control = glm.control(maxit = 1000))
+
+# calculate expected sentencing
+intercept <- exp(ses_l1$coefficients[1])
+residuals <- residuals(ses_l1,type = "response") + intercept
+pred_response <- predict(ses_l1, type = "response")
+residuals1 <- caseset$预测刑期1 - pred_response + intercept
+
+# Gini calculation function
+calculate_gini <- function(x) {
+  n <- length(x)
+  if (n == 0) return(NA)
+  sorted_x <- sort(x)
+  cumulative_sum <- cumsum(sorted_x)
+  cumulative_share <- cumulative_sum / sum(sorted_x)
+  cumulative_population <- (1:n) / n
+  
+  B <- sum((cumulative_population[-1] - cumulative_population[-n]) * 
+           (cumulative_share[-1] + cumulative_share[-n]) / 2)
+  
+  A <- 0.5 - B
+  gini <- A / 0.5
+  return(gini)
+}
+
+
+# Gini calculation——continued
+gini_coefficient <- calculate_gini(residuals)
+gini_coefficient1 <- calculate_gini(residuals1)
+print(gini_coefficient)
+print(gini_coefficient1)
+
+# lorenz curve
+data <- data.frame(
+  residuals = c(residuals, residuals1
+                ),
+  group = factor(rep(1:2, each = length(residuals1)))
+)
+
+data <- data %>%
+  group_by(group) %>%
+  arrange(residuals) %>%
+  mutate(
+    cumulative_population = (row_number() - 0.5) / n(),
+    cumulative_share = cumsum(residuals) / sum(residuals)
+  ) %>%
+  ungroup()
+
+# visualize data
+ggplot(data, aes(x = cumulative_population, y = cumulative_share, color = group)) +
+  geom_line(linewidth = 0.5) +
+  geom_abline(slope = 1, intercept = 0, color = "red", linetype = "dashed", linewidth = 0.5) +
+  labs(
+    title = "Lorenz Curves of Sentencing",
+    x = "Cumulative Population",
+    y = "Cumulative Share",
+    color = "Decision Types"
+  ) +
+  scale_color_manual(values = c("blue", "orange"), labels = c("Human (Gini: 0.400)", "Machine (Gini: 0.246)")) +
+  theme_bw()
+
+```
+
+# RR strategy one
+
+```{r}
+# data preparation
+data <- read.csv("legal_only_model_internal_bias_analysis.csv")
+# define data
+data$machine <- ifelse(data$slope_machine1 > 0, "biased", "unbiased")
+data$judge <- ifelse(data$slope_judge > 0, "biased", "unbiased")
+# get table data
+table_data <- table(
+  Group = rep(c("judge", "machine"), each = nrow(data)),
+  Result = c(data$judge, data$machine)
+)
+table_data <- table_data[2:1, ]
+print(table_data)
+
+# RR
+library(epiR)
+rr_result <- epi.2by2(table_data, method = "cohort.count", conf.level = 0.95)
+print(rr_result)
+```
+
+# RR strategy two
+
+```{r}
+# cooperating
+data$machine <- ifelse(data$slope_machine1 > 0, "biased", "unbiased")
+data$judge <- ifelse(data$slope_judge > 0, "biased", "unbiased")
+
+data <- data[complete.cases(data),]
+
+# get cooperating data
+length(data$slope_judge)
+for (i in 1:length(data$judge)) {
+  if (data$judge[i] == "biased") {
+    data$new_judge[i] = data$machine[i]
+    data$biased_use_machine[i] <- data$slope_machine1[i]
+  } else {
+    data$new_judge[i] = data$judge[i]
+    data$biased_use_machine[i] <- data$slope_judge[i]
+  }
+}
+
+table_data <- table(
+  Group = rep(c("machine", "judge"), each = nrow(data)),
+  Result = c(data$new_judge, data$judge)
+)
+print(table_data)
+table_data <- table_data[2:1, ]
+library(epiR)
+
+# 计算风险比（RR）
+rr_result <- epi.2by2(table_data, method = "cohort.count", conf.level = 0.95)
+print(rr_result)
+
+
+
+```
