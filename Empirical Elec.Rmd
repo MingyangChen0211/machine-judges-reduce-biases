@@ -8,7 +8,7 @@ output: html_document
 # Gini
 
 ```{r}
-caseset <- read.csv("legal_only_model_internal_bias_analysis.csv")
+caseset <- read.csv("human_vs_legal_only_model_bias_comparison.csv")
 library(AER)
 library(MASS)
 library(robust)
@@ -136,12 +136,8 @@ table_data <- table(
 )
 print(table_data)
 table_data <- table_data[2:1, ]
-library(epiR)
 
-# 计算风险比（RR）
+library(epiR)
 rr_result <- epi.2by2(table_data, method = "cohort.count", conf.level = 0.95)
 print(rr_result)
-
-
-
 ```
