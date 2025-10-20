@@ -13,3 +13,5 @@ We illustrate the English translation for our data's factors.
 ## Authorship Declaration
 
 The similarity and Empirical Elec code is written by Mingyang Chen; The rest of code is written by Zhipeng Wu. 
+
+If you want to use our data to conduct research, please contact Mingyang Chen at mc55649@um.edu.mo
