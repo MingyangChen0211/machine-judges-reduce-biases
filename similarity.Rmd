@@ -9,7 +9,7 @@ output: html_document
 #######################
 #prepare data
 #######################
-caseset <- read.csv("legal_only_model_internal_bias_analysis.csv")
+caseset <- read.csv("human_vs_legal_only_model_bias_comparison.csv")
 ```
 
 #human
@@ -25,7 +25,7 @@ cosine <- function(a,b){
 }
 
 
-# 总回归
+# regression
 results <- data.frame()
 
 for (i in caseset$编号) {
@@ -84,7 +84,4 @@ ggplot(df, aes(x = value, fill = group)) +
   labs(title = "Comparison of Two Histograms", x = "Value", y = "Frequency") +
   scale_fill_manual(values = c("blue", "red")) +
   theme_bw()
-
-caseset$slope_judge <- results$slope
-caseset$slope_machine <- results1$slope
 ```
