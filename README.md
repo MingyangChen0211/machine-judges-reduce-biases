@@ -10,6 +10,27 @@ We illustrate the English translation for our data's factors.
 | ----------- | ------- | ----- | ---------------- | ---- | --------------- | ------------- | ------------ | ------- | --------- | -------- | -------------- | ------------------- | ---------- | -------------------------- | ------------------ | ------------- | ---------- | --------------- | -------- | -------- | -------- | -------------- | ------------- | -------------- | ----------- | ----------------- | ---------------- | --------------------- |
 | Preparation | Attempt | Abort | Relatively large | Huge | Especially huge | Take a weapon | Repeat crime | Roaming | Snatching | Burglary | Self-surrender | Meritorious service | Confession | Make a truthful confession | Admission of guilt | Plea leniency | Recidivism | Criminal record | Juvenile | Old-aged | Disabled | Mental illness | Understanding | Reconciliation | Restitution | Underworld forces | Judge sentencing | Prediction Sentencing |
 
+## Code Files
+
+### sentencing_model.py
+
+Machine learning model for theft crime sentencing prediction using legal features.
+
+**Features**: Extracts 28 binary legal factors from court documents and theft amount for regression modeling.
+
+**Model**: XGBoost regressor optimized for CAIL2018 evaluation metric.
+
+**Usage**:
+```bash
+python sentencing_model.py --input_file data.csv --output_dir output/
+```
+
+Required columns: `全文` (full text), `刑期` (sentence), `盗窃金额` (theft amount), `序号` (case ID).
+
+### similarity.Rmd & Empirical Elec.Rmd
+
+Statistical analysis code for similarity measurement and empirical evaluation.
+
 ## Authorship Declaration
 
 The similarity and Empirical Elec code is written by Mingyang Chen; The rest of code is written by Zhipeng Wu. 
