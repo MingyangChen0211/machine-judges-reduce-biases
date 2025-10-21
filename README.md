@@ -16,7 +16,7 @@ We illustrate the English translation for our data's factors.
 
 Machine learning model for theft crime sentencing prediction using legal features.
 
-**Features**: Extracts 28 binary legal factors from court documents and theft amount for regression modeling.
+**Features**: Extracts 28 binary legal factors from CJO sentencing documents and theft amount for regression modeling.
 
 **Model**: XGBoost regressor optimized for CAIL2018 evaluation metric.
 
