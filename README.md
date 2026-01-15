@@ -1,6 +1,6 @@
 # README
 
-This is a readme document for the paper "Machine Judges Reduce Sentencing Bias". 
+This is a readme document for the paper "Machine Judges Reduce Sentencing Bias? A Computational Social Science Evaluation" on AAAI2026 Bridge Program: Trustworthy AI for Legal and Law Enforcement Applications: Foundations, Challenges, and the Path Forward. 
 
 ## Guidance For Data
 
