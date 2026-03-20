@@ -1,0 +1,333 @@
+---
+title: "Empirical part"
+author: "Mingyang Chen"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Read in Data
+
+```{r}
+# Read in Data
+setwd("/Users/chenmingyang/Desktop/best_judges_vs_machine")
+data <- read.csv("best_judges.csv")
+```
+
+# basic results
+
+```{r}
+# Compare best judges with machine
+# define data
+data$machine <- ifelse(data$slope_machine1 > 0, "biased", "unbiased")
+data$judge <- ifelse(data$slope_judge > 0, "biased", "unbiased")
+
+# get table data
+table_data <- table(
+  Group = rep(c("judge", "machine"), each = nrow(data)),
+  Result = c(data$judge, data$machine)
+)
+table_data <- table_data[2:1, ]
+print(table_data)
+```
+
+# create basic data
+
+```{r}
+# calculate judge biased situations
+judges_code <- data$法官姓名编码
+judges_code <- unique(judges_code)
+judges_code <- na.omit(judges_code)
+data <- na.omit(data)
+### get target frame
+judge_performance <- data.frame(
+  code = judges_code,
+  rate = rep(NA, length(judges_code)), 
+  biasNum = rep(NA, length(judges_code)),
+  total = rep(NA, length(judges_code))
+)
+
+# create the performance data_frame
+for (i in 1: length(judges_code)) {
+  data_evaluate <- subset(data, 法官姓名编码 == judges_code[i])
+  division <- sum(data_evaluate$judge == "biased", na.rm=TRUE) / length(data_evaluate$编号)
+  number <- sum(data_evaluate$judge == "biased", na.rm=TRUE)
+  tot <- length(data_evaluate$编号)
+  judge_performance$rate[i] <- division
+  judge_performance$biasNum[i] <- number
+  judge_performance$total[i] <- tot
+}
+
+# calculate performance situation
+sum(judge_performance$rate >= 0.1098069, na.rm=TRUE)
+length(judge_performance$code)
+
+# prepare for the rest job
+library(ggplot2)
+```
+
+# create: all judges
+
+```{r}
+# all judges
+# xpercent
+judge_new1 <- judge_performance
+biasedcases1 <- judge_new1$biasNum
+x_percent1 <- (1:length(judges_code))/length(judges_code) * 100
+# ypercent
+sorted_values1 <- sort(biasedcases1, decreasing = TRUE)
+cumulative_sum1 <- cumsum(sorted_values1)
+y_percent1 <- cumulative_sum1 / sum(sorted_values1) * 100
+
+# create frames
+data_all <- data.frame(
+  x = x_percent1,
+  y = y_percent1,
+  group = "All Judges"
+)
+```
+
+# create: at least 2 cases
+
+```{r}
+# 2 cases
+judge_new2 <- subset(judge_performance, total > 1)
+biasedcases2 <- judge_new2$biasNum
+x_percent2 <- (1:length(judge_new2$code))/length(judge_new2$code) * 100
+
+sorted_values2 <- sort(biasedcases2, decreasing = TRUE)
+cumulative_sum2 <- cumsum(sorted_values2)
+y_percent2 <- cumulative_sum2 / sum(sorted_values2) * 100
+
+# create frames
+data_min2 <- data.frame(
+  x = x_percent2,
+  y = y_percent2,
+  group = "At Least 2 Cases"
+)
+```
+
+# create: at least 10 cases
+
+```{r}
+# 10 cases
+# xpercent
+judge_new3 <- subset(judge_performance, total >= 10)
+biasedcases3 <- judge_new3$biasNum
+x_percent3 <- (1:length(judge_new3$code))/length(judge_new3$code) * 100
+# ypercent
+sorted_values3 <- sort(biasedcases3, decreasing = TRUE)
+cumulative_sum3 <- cumsum(sorted_values3)
+y_percent3 <- cumulative_sum3 / sum(sorted_values3) * 100
+
+# create frames
+data_min10 <- data.frame(
+  x = x_percent3,
+  y = y_percent3,
+  group = "At Least 10 Cases"
+)
+```
+
+# plot1
+
+```{r}
+# combine cases
+combined_data <- rbind(data_all, data_min2, data_min10)
+
+# stats table
+stats_text <- paste0(
+  "Sample Sizes:\n",
+  "All Judges: ", length(judges_code), "\n",
+  "At Least 2 Cases: ", length(judge_new2$code), "\n",
+  "At Least 10 Cases: ", length(judge_new3$code)
+)
+
+# draw plot
+ggplot(combined_data, aes(x = x, y = y, color = group)) +
+  
+  # labels
+  labs(
+    title = "Judges' Decision Distribution",
+    subtitle = "Cumulative biased cases by judge experience",
+    x = "Cumulative Judges (%)",
+    y = "Cumulative Biased Cases (%)",
+    color = "Judge Group"
+  ) +
+  
+  # panel
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, 10)) +
+  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 10)) +
+  
+  # lines
+  geom_line(size = 0.5) +
+  
+  # 50% reference lines
+  geom_hline(yintercept = 50, linetype = "dashed", color = "gray50", alpha = 0.5) +
+
+  theme_bw() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 11, color = "gray40"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "gray90"),
+    axis.line = element_line(color = "black"),
+    plot.caption = element_text(color = "gray50", size = 9, hjust = 0),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold")
+  ) +
+  
+  # color
+  scale_color_manual(values = c(
+    "All Judges" = "red",
+    "At Least 2 Cases" = "blue",
+    "At Least 10 Cases" = "darkgreen"
+  )) + 
+   geom_point(size = 0) + 
+    guides(color = guide_legend(override.aes = list(shape = 15, size = 4, 
+        alpha = 1, 
+        linetype = 0)))
+
+```
+
+# create: use rate + at least 10 cases, assuming all 10 cases
+
+```{r}
+# rate
+# xpercent
+judge_new4 <- subset(judge_performance, total >= 10)
+biasedcases4 <- judge_new4$rate
+x_percent4 <- (1:length(judge_new4$code))/length(judge_new4$code) * 100
+# ypercent
+sorted_values4 <- sort(biasedcases4,  decreasing = TRUE)
+cumulative_sum4 <- cumsum(sorted_values4)
+y_percent4 <- cumulative_sum4 / sum(sorted_values4) * 100
+
+# create frames
+data_rate <- data.frame(
+  x = x_percent4,
+  y = y_percent4, 
+  group = "Assuming 10 Cases"
+)
+```
+
+# create: only 10 cases
+
+```{r}
+# only 10
+# xpercent
+judge_new5 <- subset(judge_performance, total == 10)
+biasedcases5 <- judge_new5$rate
+x_percent5 <- (1:length(judge_new5$code))/length(judge_new5$code) * 100
+# ypercent
+sorted_values5 <- sort(biasedcases5,  decreasing = TRUE)
+cumulative_sum5 <- cumsum(sorted_values5)
+y_percent5 <- cumulative_sum5 / sum(sorted_values5) * 100
+
+# create frames
+data_only_10 <- data.frame(
+  x = x_percent5,
+  y = y_percent5, 
+  group = "Only 10 Cases"
+)
+```
+
+# plot2
+
+```{r}
+# combine cases
+combined_data2 <- rbind(data_all, data_min2, data_min10, data_rate, data_only_10)
+
+# draw plot
+ggplot(combined_data2, aes(x = x, y = y, color = group)) +
+  
+  # labels
+  labs(
+    title = "Judges' Decision Distribution",
+    x = "Cumulative Judges (%)",
+    y = "Cumulative Biased Cases (%)",
+    color = " "
+  ) +
+  
+  # panel
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, 10)) +
+  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 10)) +
+  
+  # lines
+  geom_line(size = 0.5) +
+  geom_point(aes(color = group), size = 0, alpha = 0) +
+  
+  # 50% reference lines
+  geom_hline(yintercept = 50, linetype = "dashed", color = "gray50") +
+  geom_abline(intercept = 0, slope = 1, 
+              linetype = "dashed", color = "gray50", size = 0.5) + 
+  theme_bw() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 11, color = "gray40"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "gray90"),
+    axis.line = element_line(color = "black"),
+    plot.caption = element_text(color = "gray50", size = 9, hjust = 0),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold", size = 14)
+  ) +
+  
+  # color
+  scale_color_manual(values = c(
+    "All Judges" = "#E41A1C",
+    "At Least 2 Cases" = "#377EB8",
+    "At Least 10 Cases" = "#4DAF4A", 
+    "Assuming 10 Cases" = "#984EA3",
+    "Only 10 Cases" = "#FF7F00"
+  )) + 
+  
+  guides(
+    color = guide_legend(
+      override.aes = list(
+        shape = 15,
+        size = 4,
+        alpha = 1, 
+        linetype = 0
+      )
+    )
+  )
+
+```
+
+# calculate comparison results.
+
+```{r}
+
+# create frames
+performance_comp <- data.frame(
+  type = c("all judges", "two cases", "ten cases", "rate", "only ten"),
+  worse = rep(NA, 5), 
+  better = rep(NA, 5),
+  total = rep(NA, 5)
+)
+
+for(i in 1:5) {
+  # get df name
+  df_name <- paste0("judge_new", i)
+  df <- get(df_name)
+  
+  # calculate values
+  performance_comp$worse[i] <- sum(df$rate >= 0.1098069, na.rm=TRUE)
+  performance_comp$total[i] <- length(df$code)
+  performance_comp$better[i] <- performance_comp$total[i] - performance_comp$worse[i]
+}
+
+# get ratio
+performance_comp$ratio <- performance_comp$worse / performance_comp$total
+
+# print
+print(performance_comp)
+
+df <- data.frame(
+  value = c(judge_new3$rate, judge_new5$rate),
+  group = factor(rep(c("At Least 10 Cases", "Only 10 Cases"),times = c(2013,281))))
+
+ggplot(df, aes(x = value, fill = group)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribution of Judge Decision", x = "Bias Rate", y = "Frequency") +
+  scale_fill_manual(values = c("orange", "blue", "green")) + geom_vline(xintercept = 0.1098069, color = "red", linetype = "dashed") + theme_bw()
+```
