@@ -35,6 +35,6 @@ Statistical analysis code for similarity measurement and empirical evaluation.
 
 ## Authorship Declaration
 
-The similarity and Empirical Elec code is written by Mingyang Chen; The rest of code is written by Zhipeng Wu. 
+The similarity and Empirical Elec code is written by Mingyang Chen; The mechanism analysis file's materials are worked by both Mingyang Chen and Zhipeng Wu. The rest of code is written by Zhipeng Wu. 
 
 If you want to use our data to conduct research, please contact Mingyang Chen at mc55649@um.edu.mo
